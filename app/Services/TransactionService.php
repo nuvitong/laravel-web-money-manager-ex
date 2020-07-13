@@ -10,6 +10,7 @@
 
 namespace App\Services;
 
+use App;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Payee;
@@ -37,6 +38,8 @@ class TransactionService
         if (!$transaction) {
             return null;
         }
+
+        $this->formatTransactionAmount($transaction);
 
         $account = $user->accounts()->where('name', $transaction->account_name)->first();
         if ($account) {
@@ -97,6 +100,7 @@ class TransactionService
     public function createTransaction(User $user, Collection $data, array $files = null, $jsonRequest = false)
     {
         $this->parseTransactionDate($data, $jsonRequest);
+        $this->parseTransactionAmount($data);
 
         $transaction = new Transaction($data->all());
 
@@ -136,6 +140,7 @@ class TransactionService
     public function updateTransaction(User $user, $id, Collection $data, array $files = null)
     {
         $this->parseTransactionDate($data);
+        $this->parseTransactionAmount($data);
 
         $transaction = $user->transactions()->findOrFail($id);
 
@@ -268,4 +273,24 @@ class TransactionService
 
         $data['transaction_date'] = $date;
     }
+
+    private function parseTransactionAmount($data)
+    {
+        $amount = null;
+        $transactionAmount = $data->pull('amount');
+
+        $formatter = new \NumberFormatter(App::getLocale(), \NumberFormatter::DECIMAL);
+        $amount = $formatter->parse($transactionAmount);
+
+        $data['amount'] = $amount;
+    }
+
+    private function formatTransactionAmount($transaction)
+    {
+        $formatter = new \NumberFormatter(App::getLocale(), \NumberFormatter::DECIMAL);
+        $amount = $formatter->format($transaction->amount);
+
+        $transaction->amount = $amount;
+    }
+
 }
