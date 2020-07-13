@@ -2,6 +2,7 @@
 
 namespace App\Transformers;
 
+use App;
 use App\Models\Transaction;
 use League\Fractal\TransformerAbstract;
 
